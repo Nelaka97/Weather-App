@@ -36,6 +36,7 @@
             </div>
           </div>
         </div>
+        <CityWeather />
       </div>
     </div>
   <Footer />
@@ -46,6 +47,7 @@ import DateTime from '@/components/CurrentDate&Time.vue';
 import TableComponent from '@/components/TableComponent.vue';
 import Header from '~/components/Header.vue';
 import Footer from '~/components/Footer.vue';
+import CityWeather from '~/components/CityWeather.vue';
 
 export default {
   async created() {
@@ -105,7 +107,8 @@ export default {
     DateTime,
     TableComponent,
     Header,
-    Footer
+    Footer,
+    CityWeather
   },
   data() {
     return {
