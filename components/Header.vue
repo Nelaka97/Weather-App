@@ -9,7 +9,7 @@
         </div>
         <div class="flex-none">
             <ul class="menu menu-horizontal px-1 flex items-center">
-                <li>
+                <li class="hidden md:block">
                     <DateTime />
                 </li>
             </ul>
