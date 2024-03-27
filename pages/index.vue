@@ -1,6 +1,6 @@
 <template>
 <Header />
-    <div class="bg-cover bg-center bg-no-repeat" style="background-image: url('https://img.freepik.com/free-vector/hand-painted-watercolor-pastel-sky-background_23-2148902771.jpg?w=1380&t=st=1711298833~exp=1711299433~hmac=e30bc74b305108752781d5fb7989506315c7f263745b538e5114222cf741f805');">
+    <div class="bg-cover bg-center bg-no-repeat" :style="{ 'background-image': 'url(' + backgroundImage + ')' }">
       <div class="pt-16 pb-16 mx-4 sm:mx-8 md:mx-12 lg:mx-16">
         <div class="flex flex-wrap">
           <!-- Card -->
@@ -100,7 +100,17 @@ export default {
         this.currentHumidity = null;
         this.currentWindSpeed = null;
       }
+    },
+    selectRandomBackgroundImage() {
+      // Generate a random index to select a random image from the array
+      const randomIndex = Math.floor(Math.random() * this.images.length);
+      // Construct the URL of the randomly selected background image
+      this.backgroundImage = `/${this.images[randomIndex]}`;
     }
+  },
+  mounted() {
+    // Select a random background image when the component is mounted
+    this.selectRandomBackgroundImage();
   },
   components: {
     // Register components
@@ -117,7 +127,9 @@ export default {
       currentTemperature: null,
       currentDateTime: null,
       currentWindSpeed: null,
-      errorMessage: null
+      errorMessage: null,
+      images: ['bg-1.svg', 'bg-2.svg', 'bg-3.jpg', 'bg-4.svg'],
+      backgroundImage: '' // Will hold the URL of the randomly selected background image
     };
   },
 }
