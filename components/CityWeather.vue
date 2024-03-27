@@ -69,7 +69,13 @@ export default {
         { name: 'Brussels', latitude: 50.8503, longitude: 4.3517 },
         { name: 'Vienna', latitude: 48.2082, longitude: 16.3738 },
         { name: 'Lisbon', latitude: 38.7223, longitude: -9.1393 },
-        { name: 'Athens', latitude: 37.9838, longitude: 23.7275 }
+        { name: 'Athens', latitude: 37.9838, longitude: 23.7275 },
+        { name: "Colombo", "latitude": 6.9271, "longitude": 79.8612 },
+        { name: "New York", "latitude": 40.7128, "longitude": -74.0060 },
+        { name: "Riga", "latitude": 56.9496, "longitude": 24.1052 },
+        { name: "Stockholm", "latitude": 59.3293, "longitude": 18.0686 },
+        { name: "Helsinki", "latitude": 60.1695, "longitude": 24.9354 },
+        { name: "Milan", "latitude": 45.4642, "longitude": 9.1900 }
       ],
       cityWeather: null
     };
