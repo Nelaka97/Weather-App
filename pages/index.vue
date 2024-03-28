@@ -1,25 +1,35 @@
 <template>
-<Header />
+  <div>
+    <Header />
     <div class="bg-cover bg-center bg-no-repeat" :style="{ 'background-image': 'url(' + backgroundImage + ')' }">
       <div class="pt-16 pb-16 mx-4 sm:mx-8 md:mx-12 lg:mx-16">
         <div class="flex flex-wrap">
           <!-- Card -->
           <div class="w-full lg:w-1/2 mb-4 lg:mb-0 lg:pr-8 sm:pb-12 xs:pb-12">
             <div class="card text-center shadow-xl glass">
-              <figure><img src="https://cdn.suwalls.com/wallpapers/world/riga-44659-2560x1600.jpg" alt="city" />
+              <figure>
+                <img src="https://cdn.suwalls.com/wallpapers/world/riga-44659-2560x1600.jpg" alt="city" />
               </figure>
               <div class="card-body">
-                <h2 class="text-bold text-3xl">
-                  RIGA
-                  <br/><div v-if="currentTemperature !== null" class="badge badge-info badge-lg text-cyan-50">{{
-                    currentTemperature }}°C
+                <p class="text-bold">Your Current Location</p>
+                <div v-if="userExactPlace && userCity" class="text-bold text-3xl">
+                  <span v-if="userExactPlace">{{ userExactPlace }}</span>
+                  <span v-if="userExactPlace && userCity">, </span>
+                  <span>{{ userCity }}</span>
+                </div>
+
+                <div v-else>Loading...</div>
+
+                <h2>
+                  <div v-if="userExactPlace && userCity" class="badge badge-info badge-lg text-cyan-50 text-bold">
+                    {{ currentWeatherData.temperature_2m }}°C
                   </div>
                 </h2>
-                <p>
+                <span v-if="userExactPlace && userCity">
                   <DateTime />
-                </p>
-                <div v-if="weatherData !== null">
-                  <p>Humidity: <span class="badge badge-lg">{{ currentHumidity }}%</span> Wind Speed: <span class="badge badge-lg">{{ currentWindSpeed }} (m/s)</span></p>
+                </span>
+                <div v-if="userExactPlace && userCity">
+                  <p>Wind Speed: <span class="badge badge-lg">{{ currentWeatherData.wind_speed_10m }} (m/s)</span></p>
                 </div>
               </div>
             </div>
@@ -27,22 +37,24 @@
 
           <!-- Table -->
           <div class="w-full lg:w-1/2">
-            <div class="text-center mb-4">
+            <div class="text-center mb-8 mt-8">
               <span class="text-xl">Next 7 Days Weather Forecast</span>
             </div>
             <TableComponent v-if="weatherData" :weatherData="weatherData" />
             <div v-else>
-              <p class="text-center pt-16">Forcast is loading...</p>
+              <p class="text-center pt-16">Forecast is loading...</p>
             </div>
           </div>
         </div>
         <CityWeather />
       </div>
     </div>
-  <Footer />
+    <Footer />
+  </div>
 </template>
 
 <script>
+// Import necessary components
 import DateTime from '@/components/CurrentDate&Time.vue';
 import TableComponent from '@/components/TableComponent.vue';
 import Header from '~/components/Header.vue';
@@ -52,63 +64,61 @@ import CityWeather from '~/components/CityWeather.vue';
 export default {
   async created() {
     try {
-      const response = await fetch("https://api.open-meteo.com/v1/forecast?latitude=56.9677&longitude=24.1056&current=temperature_2m,wind_speed_10m&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m");
-      if (!response.ok) {
-        throw new Error('Failed to fetch data');
-      }
-      const data = await response.json();
-      this.weatherData = data.hourly;
-      this.currentWeatherData = data.current;
+      // Get user's current location
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
 
-      // Set current weather
-      this.setCurrentWeather();
+          // Log latitude and longitude
+          console.log('Latitude:', latitude);
+          console.log('Longitude:', longitude);
 
+          // Make API request with user's location to fetch weather data
+          const weatherResponse = await fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m`
+          );
+
+          if (!weatherResponse.ok) {
+            throw new Error('Failed to fetch weather data');
+          }
+
+          const weatherData = await weatherResponse.json();
+          this.weatherData = weatherData.hourly;
+          this.currentWeatherData = weatherData.current;
+
+          // Make API request with user's location to fetch city name
+          const locationResponse = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+          );
+
+          if (!locationResponse.ok) {
+            throw new Error('Failed to fetch location data');
+          }
+
+          const locationData = await locationResponse.json();
+          this.userExactPlace = locationData.locality;
+          this.userCity = locationData.city;
+
+        },
+        (error) => {
+          console.error('Error getting user location:', error);
+          this.errorMessage = 'Failed to get user location.';
+        }
+      );
     } catch (error) {
       console.error(error);
       this.errorMessage = 'Failed to fetch data. Please try again later.';
     }
   },
   methods: {
-    setCurrentWeather() {
-      // Get current date and time
-      const currentDate = new Date();
-
-      // Add 2 hours to the current date to adjust the UTC to local time in next step
-      currentDate.setHours(currentDate.getHours() + 2);
-
-      // Get the formatted date and time string 
-      const formattedDateTime = currentDate.toISOString().slice(0, 13) + ':00';
-      console.log("Formatted Date Time with 3 hours added:", formattedDateTime);
-
-      // Set current date and time
-      this.currentDateTime = formattedDateTime;
-
-      // Find current weather based on the current date and time
-      if (this.weatherData && Array.isArray(this.weatherData.time)) {
-        const index = this.weatherData.time.findIndex(entry => entry === formattedDateTime);
-        if (index !== -1) {
-          this.currentTemperature = ((this.currentWeatherData.temperature_2m + this.weatherData.temperature_2m[index]) / 2).toFixed(1);
-          this.currentWindSpeed = ((this.currentWeatherData.wind_speed_10m + this.weatherData.wind_speed_10m[index]) / 2).toFixed(1);
-          this.currentHumidity = this.weatherData.relative_humidity_2m[index];
-        } else {
-          this.currentTemperature = null; // Temperature data not found for the current date and time
-          this.currentHumidity = null;
-          this.currentWindSpeed = null;
-        }
-      } else {
-        this.currentTemperature = null; // Temperature data not available
-        this.currentHumidity = null;
-        this.currentWindSpeed = null;
-      }
-    },
     selectRandomBackgroundImage() {
       // Generate a random index to select a random image from the array
       const randomIndex = Math.floor(Math.random() * this.images.length);
       // Construct the URL of the randomly selected background image
       this.backgroundImage = `/${this.images[randomIndex]}`;
-    }
+    },
   },
-  mounted() {
+  beforeMount() {
     // Select a random background image when the component is mounted
     this.selectRandomBackgroundImage();
   },
@@ -118,19 +128,18 @@ export default {
     TableComponent,
     Header,
     Footer,
-    CityWeather
+    CityWeather,
   },
   data() {
     return {
       weatherData: null,
       currentWeatherData: null,
-      currentTemperature: null,
-      currentDateTime: null,
-      currentWindSpeed: null,
+      userExactPlace: null,
+      userCity: null,
       errorMessage: null,
       images: ['bg-1.svg', 'bg-2.svg', 'bg-3.jpg', 'bg-4.svg'],
-      backgroundImage: '' // Will hold the URL of the randomly selected background image
+      backgroundImage: '', // Will hold the URL of the randomly selected background image
     };
   },
-}
+};
 </script>
