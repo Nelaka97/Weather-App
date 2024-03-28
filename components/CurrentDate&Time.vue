@@ -1,9 +1,3 @@
-<template>
-  <div>
-    <p>{{ currentDate }} {{ currentTime }}</p>
-  </div>
-</template>
-
 <script>
 export default {
   data() {
@@ -25,3 +19,10 @@ export default {
   }
 }
 </script>
+
+
+<template>
+  <div>
+    <p>{{ currentDate }} {{ currentTime }}</p>
+  </div>
+</template>

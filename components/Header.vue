@@ -1,3 +1,11 @@
+<script>
+import DateTime from '@/components/CurrentDate&Time.vue';
+
+export default {
+    components: { DateTime }
+}
+</script>
+
 <template>
     <div class="navbar max-h-2 flex items-center">
         <div class="flex-1">
@@ -16,11 +24,3 @@
         </div>
     </div>
 </template>
-
-<script>
-import DateTime from '@/components/CurrentDate&Time.vue';
-
-export default {
-    components: { DateTime }
-}
-</script>

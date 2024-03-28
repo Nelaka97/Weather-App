@@ -1,3 +1,86 @@
+
+<script>
+export default {
+  data() {
+    return {
+      selectedCity: null,
+      cityName: 'Select City',
+      cities: [
+        { name: 'London', latitude: 51.5074, longitude: -0.1278 },
+        { name: 'Paris', latitude: 48.8566, longitude: 2.3522 },
+        { name: 'Berlin', latitude: 52.5200, longitude: 13.4050 },
+        { name: 'Rome', latitude: 41.9028, longitude: 12.4964 },
+        { name: 'Madrid', latitude: 40.4168, longitude: -3.7038 },
+        { name: 'Amsterdam', latitude: 52.3676, longitude: 4.9041 },
+        { name: 'Brussels', latitude: 50.8503, longitude: 4.3517 },
+        { name: 'Vienna', latitude: 48.2082, longitude: 16.3738 },
+        { name: 'Lisbon', latitude: 38.7223, longitude: -9.1393 },
+        { name: 'Athens', latitude: 37.9838, longitude: 23.7275 },
+        { name: "Colombo", latitude: 6.9271, longitude: 79.8612 },
+        { name: "New York", latitude: 40.7128, longitude: -74.0060 },
+        { name: "Riga", latitude: 56.9496, longitude: 24.1052 },
+        { name: "Stockholm", latitude: 59.3293, longitude: 18.0686 },
+        { name: "Helsinki", latitude: 60.1695, longitude: 24.9354 },
+        { name: "Milan", latitude: 45.4642, longitude: 9.1900 }
+      ],
+      cityWeather: null,
+      forecastData: null, // Add forecastData property
+      currentPage: 1,
+      itemsPerPage: 24,
+      error: null // Add error property to store error messages
+    };
+  },
+  methods: {
+    hydrateUrl(lat, lon) {
+      return `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m`;
+    },
+    async searchWeather() {
+      try {
+        const response = await fetch(this.hydrateUrl(this.selectedCity.latitude, this.selectedCity.longitude));
+        if (!response.ok) {
+          throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
+        }
+        const data = await response.json();
+        this.cityWeather = data.current;
+        this.forecastData = data.hourly; // Assign fetched data to forecastData
+        this.cityName = this.selectedCity.name;
+        this.error = null; // Reset error if successful
+      } catch (error) {
+        console.error(error);
+        this.error = error.message; // Set error message
+      }
+    },
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+      }
+    },
+    prevPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+      }
+    }
+  },
+  computed: {
+    paginatedData() {
+      if (!this.forecastData) return []; // Handle scenario when forecastData is null
+      const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+      const endIndex = startIndex + this.itemsPerPage;
+      return this.forecastData.time.slice(startIndex, endIndex).map((hourData, index) => ({
+        date: hourData,
+        temperature: this.forecastData.temperature_2m[startIndex + index],
+        relativeHumidity: this.forecastData.relative_humidity_2m[startIndex + index],
+        windSpeed: this.forecastData.wind_speed_10m[startIndex + index]
+      }));
+    },
+    totalPages() {
+      if (!this.forecastData) return 0; // Handle scenario when forecastData is null
+      return Math.ceil(this.forecastData.time.length / this.itemsPerPage);
+    }
+  }
+};
+</script>
+
 <template>
   <div class="pt-8 pb-8">
     <div class="flex justify-center">
@@ -104,85 +187,3 @@
   </div>
 </template>
 
-
-<script>
-export default {
-  data() {
-    return {
-      selectedCity: null,
-      cityName: 'Select City',
-      cities: [
-        { name: 'London', latitude: 51.5074, longitude: -0.1278 },
-        { name: 'Paris', latitude: 48.8566, longitude: 2.3522 },
-        { name: 'Berlin', latitude: 52.5200, longitude: 13.4050 },
-        { name: 'Rome', latitude: 41.9028, longitude: 12.4964 },
-        { name: 'Madrid', latitude: 40.4168, longitude: -3.7038 },
-        { name: 'Amsterdam', latitude: 52.3676, longitude: 4.9041 },
-        { name: 'Brussels', latitude: 50.8503, longitude: 4.3517 },
-        { name: 'Vienna', latitude: 48.2082, longitude: 16.3738 },
-        { name: 'Lisbon', latitude: 38.7223, longitude: -9.1393 },
-        { name: 'Athens', latitude: 37.9838, longitude: 23.7275 },
-        { name: "Colombo", latitude: 6.9271, longitude: 79.8612 },
-        { name: "New York", latitude: 40.7128, longitude: -74.0060 },
-        { name: "Riga", latitude: 56.9496, longitude: 24.1052 },
-        { name: "Stockholm", latitude: 59.3293, longitude: 18.0686 },
-        { name: "Helsinki", latitude: 60.1695, longitude: 24.9354 },
-        { name: "Milan", latitude: 45.4642, longitude: 9.1900 }
-      ],
-      cityWeather: null,
-      forecastData: null, // Add forecastData property
-      currentPage: 1,
-      itemsPerPage: 24,
-      error: null // Add error property to store error messages
-    };
-  },
-  methods: {
-    hydrateUrl(lat, lon) {
-      return `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m`;
-    },
-    async searchWeather() {
-      try {
-        const response = await fetch(this.hydrateUrl(this.selectedCity.latitude, this.selectedCity.longitude));
-        if (!response.ok) {
-          throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
-        }
-        const data = await response.json();
-        this.cityWeather = data.current;
-        this.forecastData = data.hourly; // Assign fetched data to forecastData
-        this.cityName = this.selectedCity.name;
-        this.error = null; // Reset error if successful
-      } catch (error) {
-        console.error(error);
-        this.error = error.message; // Set error message
-      }
-    },
-    nextPage() {
-      if (this.currentPage < this.totalPages) {
-        this.currentPage++;
-      }
-    },
-    prevPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-      }
-    }
-  },
-  computed: {
-    paginatedData() {
-      if (!this.forecastData) return []; // Handle scenario when forecastData is null
-      const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-      const endIndex = startIndex + this.itemsPerPage;
-      return this.forecastData.time.slice(startIndex, endIndex).map((hourData, index) => ({
-        date: hourData,
-        temperature: this.forecastData.temperature_2m[startIndex + index],
-        relativeHumidity: this.forecastData.relative_humidity_2m[startIndex + index],
-        windSpeed: this.forecastData.wind_speed_10m[startIndex + index]
-      }));
-    },
-    totalPages() {
-      if (!this.forecastData) return 0; // Handle scenario when forecastData is null
-      return Math.ceil(this.forecastData.time.length / this.itemsPerPage);
-    }
-  }
-};
-</script>
